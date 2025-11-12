@@ -13,20 +13,35 @@ export function AuthProvider({ children }) {
     setIsAuthed(!!token);
   }, []);
 
-  const login = useCallback(async (password) => {
+  // Try real login first (email/password), then fallback to demo password endpoint
+  const login = useCallback(async (password, email = 'admin@example.com') => {
     try {
-      const resp = await fetch(`${API_BASE}/api/auth/demo`, {
+      // primary: real login
+      const resp = await fetch(`${API_BASE}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      if (resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        if (data?.token) localStorage.setItem('token', data.token);
+        setIsAuthed(true);
+        setError(null);
+        return true;
+      }
+      // fallback: demo endpoint
+      const demoResp = await fetch(`${API_BASE}/api/auth/demo`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password })
       });
-      const data = await resp.json().catch(() => ({}));
-      if (!resp.ok) {
-        setError(data?.message || 'Invalid password');
+      const demoData = await demoResp.json().catch(() => ({}));
+      if (!demoResp.ok) {
+        setError(demoData?.message || 'Invalid credentials');
         setIsAuthed(false);
         return false;
       }
-      if (data?.token) localStorage.setItem('token', data.token);
+      if (demoData?.token) localStorage.setItem('token', demoData.token);
       setIsAuthed(true);
       setError(null);
       return true;

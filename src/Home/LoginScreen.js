@@ -12,6 +12,11 @@ const LoginScreen = () => {
     []
   );
 
+  const [input, setInput] = useState('');
+
+  const { login, error } = useAuth();
+  const navigate = useNavigate();
+
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
@@ -29,20 +34,11 @@ const LoginScreen = () => {
   const dayOfWeek = format(now, 'eeee');
   const date = format(now, 'dd MMMM yyyy').toUpperCase();
 
-  const { login, error } = useAuth();
-  const navigate = useNavigate();
-  const [input, setInput] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!input) return; // require password
-    setSubmitting(true);
+    if (!input) return;
     const ok = await login(input.trim());
-    setSubmitting(false);
-    if (ok) {
-      navigate('/dashboard', { replace: true });
-    }
+    if (ok) navigate('/dashboard', { replace: true });
   };
 
   return (
@@ -77,7 +73,7 @@ const LoginScreen = () => {
           <p className="text-lg tracking-widest mt-2">{date}</p>
         </div>
 
-        {/* Password input */}
+        {/* Password input (press Enter to submit) */}
         <form onSubmit={handleSubmit} className="w-full max-w-sm mx-auto space-y-3">
           <input
             type="password"
@@ -86,8 +82,8 @@ const LoginScreen = () => {
             onChange={(e) => setInput(e.target.value)}
             className="w-full px-4 py-3 bg-gray-800/60 border border-gray-700 rounded-md text-center text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/80 focus:border-transparent backdrop-blur-sm transition disabled:opacity-50"
           />
-          
-          
+          {/* Hidden submit to allow Enter key without a visible button */}
+          <input type="submit" hidden />
           <p className="text-sm mt-1 h-5 text-center">
             {error && <span className="text-red-400">{error}</span>}
           </p>
